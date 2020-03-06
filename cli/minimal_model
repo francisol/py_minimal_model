@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+import minimal_model.solvers
+import pysat.solvers
+from pysat.formula import CNF
+import argparse
+import sys
+import minimal_model.utils
+import os
+import signal
+from threading import Thread
+
+
+def parse_argument(arguments):
+    pysat_help = '''The solver name of pysat, the cli will depend it，you can select followed options
+    cadical     = ('cd', 'cdl', 'cadical')
+    glucose3    = ('g3', 'g30', 'glucose3', 'glucose30')
+    glucose4    = ('g4', 'g41', 'glucose4', 'glucose41')
+    lingeling   = ('lgl', 'lingeling')
+    maplechrono = ('mcb', 'chrono', 'maplechrono')
+    maplecm     = ('mcm', 'maplecm')
+    maplesat    = ('mpl', 'maple', 'maplesat')
+    minicard    = ('mc', 'mcard', 'minicard')
+    minisat22   = ('m22', 'msat22', 'minisat22')
+    minisatgh   = ('mgh', 'msat-gh', 'minisat-gh')
+    '''
+    parser = argparse.ArgumentParser(description='A cli to compute a minimal model given by argument',formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--file', help='The path of CNF file', required=True)
+    parser.add_argument('--pysat', help=pysat_help, default='m22')
+    parser.add_argument('--mem-limit', help="Limit on memory usage in megabytes. zero is unlimited", default=0,type=int)
+    parser.add_argument('--time-limit', help="Limit on CPU time allowed in seconds.zero is unlimited", default=0,type=int)
+    parser.add_argument('--mod', help='Select a algorithm use to compute minimal model', choices=['MR', 'MM'],default='MM')
+    parser.add_argument('--simpfy', help='If it true cli will print minimal model only value is positive', type=bool,default='MM')
+    return parser.parse_args()
+
+solver = None
+def print_status():
+    cpu_time = minimal_model.utils.get_cpu_time()
+    used_mem = minimal_model.utils.get_used_memory()
+    print("Memory used           : %.2f MB"%used_mem)
+    print("CPU time              : %g s" % cpu_time)
+    print("ComputeModelCount     : %d " % solver.compute_model_count)
+    if solver is None:
+        return
+    if hasattr(solver, 'check_model_count'):
+        print("CheckModelCount       : %d " % solver.check_model_count)
+
+def print_interrupt(signum, frame):
+    print_status()
+    print("***INTERRUPT")
+    return 0
+
+
+if __name__ == "__main__":
+    args = parse_argument(sys.argv)
+    signal.signal(signal.SIGQUIT, print_interrupt)
+    signal.signal(signal.SIGTERM, print_interrupt)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGSEGV, print_interrupt)
+    signal.signal(signal.SIGILL, print_interrupt)
+    try:
+        if args.mem_limit:
+            minimal_model.utils.limit_memory(args.mem_limit)
+        if args.time_limit:
+            minimal_model.utils.limit_time(args.time_limit)
+        if not os.path.isfile(args.file):
+            print("CNF file {} don't exist".format(args.file),file=sys.stderr)
+        formula = CNF(from_file=args.file)
+        solver = minimal_model.solvers.Solver(args.mod, pysat_name=args.pysat)
+        solver.append_formula(formula)
+        (sat, model) = solver.compute_minimal_model()
+        cpu_time = minimal_model.utils.get_cpu_time()
+        used_mem = minimal_model.utils.get_used_memory()
+        print_status()
+        if sat:
+            print("SATISFIABLE")
+            model = [x for x in model if x > 0] if args.simpfy else model
+            print(model)
+        else:
+            print("UNSATISFIABLE")
+    except pysat.solvers.NoSuchSolverError as identifier:
+        print("No such pysat solver named {}".format(identifier), file=sys.stderr)
+    except MemoryError as e:
+        print()
+        print_status()
+        print("***INTERRUPT")
+    except BaseException as b:
+        print()
+        print_status()
+        print("***INTERRUPT")
