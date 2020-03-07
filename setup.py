@@ -6,11 +6,11 @@ from setuptools import setup
 
 
 setup(
-        name='demo',     
+        name='minimal_model',     
         version=minimal_model.VERSION,   
         description='compute a minimal model',   
         author='', 
-        install_requires=['python-sat'],
+        install_requires=['python-sat','psutil'],
         author_email='',  
         url='',  
         scripts=['cli/minimal_model'],

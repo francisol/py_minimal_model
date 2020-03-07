@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-__all__ = ["MMSolver"]
 import pysat.solvers
 import pysat.formula
 from pysat.formula import CNF
@@ -17,7 +16,7 @@ class Solver():
         The constructor need a   solver's name or short name ,other parameter will be given specific solver's constructor
     '''
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name='MM', **kwargs):
         '''
         constructor
         '''

@@ -38,9 +38,9 @@ def print_status():
     used_mem = minimal_model.utils.get_used_memory()
     print("Memory used           : %.2f MB"%used_mem)
     print("CPU time              : %g s" % cpu_time)
-    print("ComputeModelCount     : %d " % solver.compute_model_count)
     if solver is None:
         return
+    print("ComputeModelCount     : %d " % solver.compute_model_count)
     if hasattr(solver, 'check_model_count'):
         print("CheckModelCount       : %d " % solver.check_model_count)
 
@@ -52,9 +52,8 @@ def print_interrupt(signum, frame):
 
 if __name__ == "__main__":
     args = parse_argument(sys.argv)
-    signal.signal(signal.SIGQUIT, print_interrupt)
     signal.signal(signal.SIGTERM, print_interrupt)
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, print_interrupt)
     signal.signal(signal.SIGSEGV, print_interrupt)
     signal.signal(signal.SIGILL, print_interrupt)
     try:
@@ -62,8 +61,6 @@ if __name__ == "__main__":
             minimal_model.utils.limit_memory(args.mem_limit)
         if args.time_limit:
             minimal_model.utils.limit_time(args.time_limit)
-        if not os.path.isfile(args.file):
-            print("CNF file {} don't exist".format(args.file),file=sys.stderr)
         formula = CNF(from_file=args.file)
         solver = minimal_model.solvers.Solver(args.mod, pysat_name=args.pysat)
         solver.append_formula(formula)
@@ -79,6 +76,8 @@ if __name__ == "__main__":
             print("UNSATISFIABLE")
     except pysat.solvers.NoSuchSolverError as identifier:
         print("No such pysat solver named {}".format(identifier), file=sys.stderr)
+    except FileNotFoundError as e:
+        print("CNF file {} don't exist".format(args.file),file=sys.stderr)
     except MemoryError as e:
         print()
         print_status()

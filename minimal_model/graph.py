@@ -26,24 +26,15 @@ class Graph(object):
     def empty_indegree(self):
         '''
         This method is used to get all point which in-degree is zero.\n
-        This method can be used in `for`
-        
         CODE
         ```
         for node in graph.empty_indegree():
             pass
         ```
         '''
-        while True:
-            node=None
-            for (k, v) in self.__input_degree.items():
-                if v == 0:
-                    node = k
-                    break
-            if node:
-                yield node
-            else:
-                break
+        return [k for (k, v) in self.__input_degree.items() if v == 0]
+        
+
 
     
     def __getattr__(self,name):
@@ -87,6 +78,13 @@ class Graph(object):
                 graph.add_point(value, k)
         return graph
 
+    def get_one_empty_indegree(self):
+        '''
+        Return a point which in-degree is zero. if there isn't,it will reurn `None`
+        '''
+        for (k,v) in self.__input_degree.items():
+            if v == 0:
+                return k
 class StronglyConnectedGraph():
     '''
     storage strongly connected graph info by dict
@@ -190,26 +188,18 @@ class StronglyConnectedGraph():
     def empty_indegree(self):
         '''
         This method is used to get all point which in-degree is zero.\n
-        This method can be used in `for`
-        
         CODE
         ```
         for node in graph.empty_indegree():
             pass
         ```
         '''
-        while True:
-            node=None
-            for (k, v) in self.__input_degree.items():
-                if v == 0:
-                    node = k
-                    break
-            if node:
-                yield node
-            else:
-                break
+        return [k for (k, v) in self.__input_degree.items() if v == 0]
     
     def get_one_empty_indegree(self):
+        '''
+        Return a point which in-degree is zero. if there isn't,it will reurn `None`
+        '''
         for (k,v) in self.__input_degree.items():
             if v == 0:
                 return k
