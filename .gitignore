@@ -2,5 +2,5 @@
 __pycache__
 dist
 build
-demo.egg-info
+minimal_model.egg-info
 .vscode
