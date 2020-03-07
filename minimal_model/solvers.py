@@ -55,6 +55,7 @@ class MMSolver(object):
         self.__pysat_sovlver = pysat.solvers.Solver(pysat_name, **kwargs)
         self.compute_model_count = 0
     def compute_minimal_model(self):
+        model = None
         '''
         This method is used to  a minimal model,it will return a `tuple`.
         The first value means whether a CNF formula given to the solver is satisfiability
