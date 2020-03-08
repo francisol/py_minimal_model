@@ -151,12 +151,13 @@ class MRSolver(object):
 
     def __compute(self, ts, s):
         if len(ts) == 0:
-            return len(s) == 0
+            return len(s) != 0
         if len(s) == 1:
             for clause in ts.values():
                 body = [x for x in clause if x < 0]
                 if body:
-                    return False
+                    return True
+            return False
         solver = pysat.solvers.Solver(self.__pysat_mr_name)
 
         for clause in ts.values():
@@ -192,6 +193,7 @@ class MRSolver(object):
                 node = scc.get_one_empty_indegree()
                 continue
             ts = self.__compute_ts(mr_clauses, scc.scc_weights[node])
+            
             s = self.__compute_s(scc, self.__formula.nv)
             if not self.__compute(ts,s):
                 model = [-x if x in s else x for x in model]
@@ -216,7 +218,6 @@ class MRSolver(object):
         model = None
         self.compute_model_count = 1
         while self.__pysat_sovlver.solve():
-            self.compute_model_count += 1
             model = self.__pysat_sovlver.get_model()
             if self.__check(self.__formula.clauses, copy.deepcopy(model)):
                 break
@@ -227,5 +228,6 @@ class MRSolver(object):
                 else:
                     self.__pysat_sovlver.add_clause([item])
             self.__pysat_sovlver.add_clause(positive_list)
+            self.compute_model_count += 1
         return (model is not None ,model)
 
