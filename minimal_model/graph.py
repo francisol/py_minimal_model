@@ -178,12 +178,15 @@ class StronglyConnectedGraph():
         else:
             v = set()
             self.__content[start]=v
-        if end is not None and end != start:
-            degree = self.__input_degree.get(end, 0)
-            self.__input_degree[end] = degree + 1
-            self.__input_degree.setdefault(start, 0)
-            self.__content.setdefault(end,set())
-            v.add(end)
+        if end is None or end == start:
+            return
+        if end in v:
+            return
+        degree = self.__input_degree.get(end, 0)
+        self.__input_degree[end] = degree + 1
+        self.__input_degree.setdefault(start, 0)
+        self.__content.setdefault(end,set())
+        v.add(end)
     
     def empty_indegree(self):
         '''
