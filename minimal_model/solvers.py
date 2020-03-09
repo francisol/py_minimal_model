@@ -129,8 +129,9 @@ class MRSolver(object):
             body = [x for x in clause if x < 0]
             if set(body).intersection(negativ_model):
                 continue
-            c = [x for x in clause if -x not in negativ_model]
-            result.append(c)
+            c = [x for x in clause if - x not in negativ_model]
+            if c:
+                result.append(c)
         return result
 
     def __compute_ts(self, clauses,weights):
@@ -138,7 +139,7 @@ class MRSolver(object):
         key = self.__formula.nv
         for clause in clauses:
             c = {abs(x) for x in clause}
-            if c.issubset(weights):
+            if c.issubset(weights) and clause:
                 ts[key] = clause
             key += 1
         return ts
@@ -161,7 +162,8 @@ class MRSolver(object):
         solver = pysat.solvers.Solver(self.__pysat_mr_name)
 
         for clause in ts.values():
-            solver.add_clause(clause)
+            if clause :
+                solver.add_clause(clause)
         solver.add_clause([-x for x in s])
         return solver.solve()
     
@@ -198,6 +200,7 @@ class MRSolver(object):
             if not self.__compute(ts,s):
                 model = [-x if x in s else x for x in model]
                 self.__reduce(mr_clauses, s)
+                mr_clauses= [x for x in mr_clauses if x]
                 scc.remove(node)
                 node = scc.get_one_empty_indegree()
             else:
