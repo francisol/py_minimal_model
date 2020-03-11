@@ -144,11 +144,8 @@ class MRSolver(object):
             key += 1
         return ts
     
-    def __compute_s(self, graph, limit):
-        s = set()
-        for node in graph.empty_indegree():
-            s.update([x for x in graph.scc_weights[node] if x <= limit])
-        return s
+    def __compute_s(self, component, limit):
+        return {x for x in component if x <= limit}
 
     def __compute(self, ts, s):
         if len(ts) == 0:
@@ -196,7 +193,7 @@ class MRSolver(object):
                 continue
             ts = self.__compute_ts(mr_clauses, scc.scc_weights[node])
             
-            s = self.__compute_s(scc, self.__formula.nv)
+            s = self.__compute_s(scc.scc_weights[node], self.__formula.nv)
             if not self.__compute(ts,s):
                 model = [-x if x in s else x for x in model]
                 self.__reduce(mr_clauses, s)
