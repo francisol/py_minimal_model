@@ -7,6 +7,7 @@ import sys
 import minimal_model.utils
 import os
 import signal
+import sys
 from threading import Thread
 
 
@@ -28,8 +29,9 @@ def parse_argument(arguments):
     parser.add_argument('--pysat', help=pysat_help, default='m22')
     parser.add_argument('--mem-limit', help="Limit on memory usage in megabytes. zero is unlimited", default=0,type=int)
     parser.add_argument('--time-limit', help="Limit on CPU time allowed in seconds.zero is unlimited", default=0,type=int)
+    parser.add_argument('--setrecursion-limit', help="setrecursion limit", default=1000,type=int)
     parser.add_argument('--mod', help='Select a algorithm use to compute minimal model', choices=['MR', 'MM'],default='MM')
-    parser.add_argument('--simpfy', help='If it true cli will print minimal model only value is positive', type=bool,default='MM')
+    parser.add_argument('--simpfy', help='If it true cli will print minimal model only value is positive', type=bool,default='Faslse')
     return parser.parse_args()
 
 solver = None
@@ -56,6 +58,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, print_interrupt)
     signal.signal(signal.SIGSEGV, print_interrupt)
     signal.signal(signal.SIGILL, print_interrupt)
+    sys.setrecursionlimit(args.setrecursion_limit)
     try:
         if args.mem_limit:
             minimal_model.utils.limit_memory(args.mem_limit)
