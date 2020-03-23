@@ -191,9 +191,8 @@ class MRSolver(object):
                 scc.remove(node)
                 node = scc.get_one_empty_indegree()
                 continue
-            ts = self.__compute_ts(mr_clauses, scc.scc_weights[node])
-            
             s = self.__compute_s(scc.scc_weights[node], self.__formula.nv)
+            ts = self.__compute_ts(mr_clauses, s)
             if not self.__compute(ts,s):
                 model = [-x if x in s else x for x in model]
                 self.__reduce(mr_clauses, s)
