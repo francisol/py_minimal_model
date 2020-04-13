@@ -54,6 +54,10 @@ class MMSolver(object):
     def __init__(self,pysat_name='m22',bootstrap_with=None,**kwargs):
         self.__pysat_sovlver = pysat.solvers.Solver(pysat_name, **kwargs)
         self.compute_model_count = 0
+    def interrupt(self):
+        if self.__pysat_sovlver:
+            self.__pysat_sovlver.interrupt()
+
     def compute_minimal_model(self):
         model = None
         '''
@@ -101,6 +105,7 @@ class MRSolver(object):
     def __init__(self, pysat_name='m22', pysat_mr_name='',bootstrap_with=None, **kwargs):
         self.__pysat_sovlver = pysat.solvers.Solver(pysat_name, **kwargs)
         self.__pysat_mr_name = pysat_mr_name if pysat_mr_name != '' else pysat_name
+        self.__mr_solver=None
         self.__formula = CNF()
         self.compute_model_count=0
         self.check_model_count=0
@@ -156,14 +161,20 @@ class MRSolver(object):
                 if body:
                     return True
             return False
-        solver = pysat.solvers.Solver(self.__pysat_mr_name)
+        self.__mr_solver = pysat.solvers.Solver(self.__pysat_mr_name)
 
         for clause in ts.values():
             if clause :
-                solver.add_clause(clause)
-        solver.add_clause([-x for x in s])
-        return solver.solve()
-    
+                self.__mr_solver.add_clause(clause)
+        self.__mr_solver.add_clause([-x for x in s])
+        return self.__mr_solver.solve()
+
+    def interrupt(self):
+        if self.__pysat_sovlver:
+            self.__pysat_sovlver.interrupt()
+        if self.__mr_solver:
+            self.__mr_solver.interrupt()
+
     def __reduce(self, clauses, s):
         for clause in clauses:
             header = {x for x in clause if x > 0}
@@ -196,6 +207,7 @@ class MRSolver(object):
             if not self.__compute(ts,s):
                 model = [-x if x in s else x for x in model]
                 self.__reduce(mr_clauses, s)
+                self.__mr_solver=None
                 mr_clauses= [x for x in mr_clauses if x]
                 scc.remove(node)
                 node = scc.get_one_empty_indegree()

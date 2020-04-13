@@ -8,7 +8,7 @@ import minimal_model.utils
 import os
 import signal
 import sys
-from threading import Thread
+from threading import Timer
 
 
 def parse_argument(arguments):
@@ -51,6 +51,12 @@ def print_interrupt(signum, frame):
     print("***INTERRUPT")
     return 0
 
+def interrupt(solver):
+    print("Interrupt by time limit")
+    solver.interrupt()
+    print_status()
+    print("***INTERRUPT")
+    exit(0)
 
 if __name__ == "__main__":
     args = parse_argument(sys.argv)
@@ -62,11 +68,13 @@ if __name__ == "__main__":
     try:
         if args.mem_limit:
             minimal_model.utils.limit_memory(args.mem_limit)
-        if args.time_limit:
-            minimal_model.utils.limit_time(args.time_limit)
         formula = CNF(from_file=args.file)
         solver = minimal_model.solvers.Solver(args.mod, pysat_name=args.pysat)
         solver.append_formula(formula)
+        if args.time_limit:
+            # minimal_model.utils.limit_time(args.time_limit)
+            timer = Timer(args.time_limit, interrupt, [solver])
+            timer.start()
         (sat, model) = solver.compute_minimal_model()
         cpu_time = minimal_model.utils.get_cpu_time()
         used_mem = minimal_model.utils.get_used_memory()
@@ -82,7 +90,7 @@ if __name__ == "__main__":
     except FileNotFoundError as e:
         print("CNF file {} don't exist".format(args.file),file=sys.stderr)
     except MemoryError as e:
-        print()
+        print("Interrupt by memory limit")
         print_status()
         print("***INTERRUPT")
     except BaseException as b:
