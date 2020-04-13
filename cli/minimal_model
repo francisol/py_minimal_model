@@ -49,6 +49,7 @@ def print_status():
 def print_interrupt(signum, frame):
     print_status()
     print("***INTERRUPT")
+    exit(0)
     return 0
 
 def interrupt(solver):
@@ -72,9 +73,7 @@ if __name__ == "__main__":
         solver = minimal_model.solvers.Solver(args.mod, pysat_name=args.pysat)
         solver.append_formula(formula)
         if args.time_limit:
-            # minimal_model.utils.limit_time(args.time_limit)
-            timer = Timer(args.time_limit, interrupt, [solver])
-            timer.start()
+            minimal_model.utils.limit_time(args.time_limit)
         (sat, model) = solver.compute_minimal_model()
         cpu_time = minimal_model.utils.get_cpu_time()
         used_mem = minimal_model.utils.get_used_memory()
@@ -94,6 +93,6 @@ if __name__ == "__main__":
         print_status()
         print("***INTERRUPT")
     except BaseException as b:
-        print()
+        print("Interrupt by BaseException",b)
         print_status()
         print("***INTERRUPT")

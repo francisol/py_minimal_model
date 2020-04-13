@@ -4,3 +4,4 @@ dist
 build
 minimal_model.egg-info
 .vscode
+.DS_Store

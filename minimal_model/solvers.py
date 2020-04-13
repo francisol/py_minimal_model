@@ -69,7 +69,7 @@ class MMSolver(object):
         if self.compute_model_count >0:
             raise RuntimeError("this function can not be called repeatly")
         self.compute_model_count=1
-        while self.__pysat_sovlver.solve_limited():
+        while self.__pysat_sovlver.solve():
             self.compute_model_count+=1
             model = self.__pysat_sovlver.get_model()
             positive_list=[]
@@ -167,7 +167,7 @@ class MRSolver(object):
             if clause :
                 self.__mr_solver.add_clause(clause)
         self.__mr_solver.add_clause([-x for x in s])
-        return self.__mr_solver.solve_limited()
+        return self.__mr_solver.solve()
 
     def interrupt(self):
         if self.__pysat_sovlver:
@@ -228,7 +228,7 @@ class MRSolver(object):
             raise RuntimeError("this function can not be called repeatly")
         model = None
         self.compute_model_count = 1
-        while self.__pysat_sovlver.solve_limited():
+        while self.__pysat_sovlver.solve():
             model = self.__pysat_sovlver.get_model()
             if self.__check(self.__formula.clauses, copy.deepcopy(model)):
                 break
