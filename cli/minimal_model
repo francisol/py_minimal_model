@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import minimal_model.solvers
+import minimal_model.mr_solvers
 import pysat.solvers
 from pysat.formula import CNF
 import argparse
@@ -32,6 +33,7 @@ def parse_argument(arguments):
     parser.add_argument('--setrecursion-limit', help="setrecursion limit", default=1000,type=int)
     parser.add_argument('--mod', help='Select a algorithm use to compute minimal model', choices=['MR', 'MM'],default='MM')
     parser.add_argument('--simpfy', help='If it true cli will print minimal model only value is positive', type=bool,default='Faslse')
+    parser.add_argument('--mr',action='store_true',help='use mr')
     return parser.parse_args()
 
 solver = None
@@ -70,7 +72,7 @@ if __name__ == "__main__":
         if args.mem_limit:
             minimal_model.utils.limit_memory(args.mem_limit)
         formula = CNF(from_file=args.file)
-        solver = minimal_model.solvers.Solver(args.mod, pysat_name=args.pysat)
+        solver = minimal_model.mr_solvers.Solver(args.mod, pysat_name=args.pysat) if args.mr else minimal_model.solvers.Solver(args.mod, pysat_name=args.pysat)
         solver.append_formula(formula)
         if args.time_limit:
             minimal_model.utils.limit_time(args.time_limit)

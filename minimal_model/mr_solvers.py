@@ -10,6 +10,21 @@ SoloverMap = {
     'MR':'MRSolver'
     # 'MMSolver': 'MMSolver',
 }
+
+def mr(clauses,model):
+    # positive_model = set([x for x in model if x > 0])
+    negativ_model = set([x for x in model if x < 0])
+    result =[]
+    for clause in clauses:
+            # header = [x for x in clause if x > 0]
+        body = [x for x in clause if x < 0]
+        if set(body).intersection(negativ_model):
+            continue
+        c = [x for x in clause if - x not in negativ_model]
+        if c:
+            result.append(c)
+    return result
+
 class Solver():
     '''
         This class can  proxy a specific solver by solver's name or short name. \n
@@ -33,7 +48,8 @@ class Solver():
                 self.__real_solver = clas(**kwargs)
             else:
                 raise RuntimeError('no solver named [{}]'.format(name))
-        print('compute minimal model use ',name )
+        print('compute minimal model use ',name,' with mr ' )
+
 
     def __getattr__(self, name):
         '''
@@ -50,10 +66,23 @@ class MMSolver(object):
     '''
     def __getattr__(self, name):
         return getattr(self.__pysat_sovlver,name)
+    
+    def add_clause(self, clause,**kwargs):
+        self.__formula.append(clause)
+        return self.__pysat_sovlver.add_clause(clause, **kwargs)
+    
+    def append_formula(self, formula, **kwargs):
+        for clause in formula.clauses:
+            self.__formula.append(clause)
+        self.__pysat_sovlver.append_formula(formula, **kwargs)
         
     def __init__(self,pysat_name='m22',bootstrap_with=None,**kwargs):
+        self.__pysat_name=pysat_name
         self.__pysat_sovlver = pysat.solvers.Solver(pysat_name, **kwargs)
         self.compute_model_count = 0
+        self.__formula = CNF()
+        self.__kwargs=kwargs
+        self.__cluases = []
     def interrupt(self):
         if self.__pysat_sovlver:
             self.__pysat_sovlver.interrupt()
@@ -64,20 +93,25 @@ class MMSolver(object):
         This method is used to  a minimal model,it will return a `tuple`.
         The first value means whether a CNF formula given to the solver is satisfiability
         The second value is a minimal model only if the formula is satisfiability, otherwise the value is None\n
-        :returnType (Boolean,list)
+        :returnType (Boolean,Array)
         '''
+        self.__clauses = self.__formula.clauses
         if self.compute_model_count >0:
             raise RuntimeError("this function can not be called repeatly")
         self.compute_model_count=1
         while self.__pysat_sovlver.solve():
             self.compute_model_count+=1
             model = self.__pysat_sovlver.get_model()
-            positive_list=[]
-            for item in model:
-                if item >0:
-                    positive_list.append(-item)
-                else:
-                    self.__pysat_sovlver.add_clause([item])
+            self.__clauses=mr(self.__clauses,model)
+            self.__pysat_sovlver = pysat.solvers.Solver(self.__pysat_name, **self.__kwargs)
+            for clause in self.__clauses:
+                self.__pysat_sovlver.add_clause(clause)
+            positive_list=[-item for item in model if item >0 ]
+            # for item in model:
+            #     if item >0:
+            #         positive_list.append(-item)
+            #     else:
+            #         self.__pysat_sovlver.add_clause([item])
             self.__pysat_sovlver.add_clause(positive_list)
         return (model is not None ,model)
 
@@ -101,12 +135,15 @@ class MRSolver(object):
         for clause in formula.clauses:
             self.__formula.append(clause)
         self.__pysat_sovlver.append_formula(formula, **kwargs)
+    
 
     def __init__(self, pysat_name='m22', pysat_mr_name='',bootstrap_with=None, **kwargs):
         self.__pysat_sovlver = pysat.solvers.Solver(pysat_name, **kwargs)
         self.__pysat_mr_name = pysat_mr_name if pysat_mr_name != '' else pysat_name
         self.__mr_solver=None
         self.__formula = CNF()
+        self.__kwargs=kwargs
+        self.__cluases = []
         self.compute_model_count=0
         self.check_model_count=0
         if bootstrap_with:
@@ -125,19 +162,6 @@ class MRSolver(object):
             key += 1
         return graph
 
-    def __mr(self, clauses,model):
-        # positive_model = set([x for x in model if x > 0])
-        negativ_model = set([x for x in model if x < 0])
-        result =[]
-        for clause in clauses:
-            # header = [x for x in clause if x > 0]
-            body = [x for x in clause if x < 0]
-            if set(body).intersection(negativ_model):
-                continue
-            c = [x for x in clause if - x not in negativ_model]
-            if c:
-                result.append(c)
-        return result
 
     def __compute_ts(self, clauses,weights):
         ts = {}
@@ -191,7 +215,7 @@ class MRSolver(object):
         The algorithm refer to
         '''
         self.check_model_count += 1
-        mr_clauses = self.__mr(clauses, model)
+        mr_clauses = mr(clauses, model)
         graph = self.__create_graph(mr_clauses)
         scc = StronglyConnectedGraph(graph)
         node = scc.get_one_empty_indegree()
@@ -224,20 +248,25 @@ class MRSolver(object):
         The second value is a minimal model only if the formula is satisfiability, otherwise the value is None\n
         :returnType (Boolean,list)
         '''
+        self.__clauses = self.__formula.clauses
         if self.compute_model_count >0:
             raise RuntimeError("this function can not be called repeatly")
         model = None
         self.compute_model_count = 1
         while self.__pysat_sovlver.solve():
             model = self.__pysat_sovlver.get_model()
-            if self.__check(self.__formula.clauses, copy.deepcopy(model)):
+            self.__clauses = mr(self.__clauses, model)
+            if self.__check(copy.deepcopy(self.__clauses), copy.deepcopy(model)):
                 break
-            positive_list=[]
-            for item in model:
-                if item >0:
-                    positive_list.append(-item)
-                else:
-                    self.__pysat_sovlver.add_clause([item])
+            self.__pysat_sovlver=pysat.solvers.Solver(self.__pysat_name, **self.kwargs)
+            for clause in self.self.__clauses:
+                self.__pysat_sovlver.add_clause(clause)
+            positive_list=[-item for item in model if item >0 ]
+            # for item in model:
+            #     if item >0:
+            #         positive_list.append(-item)
+            #     else:
+            #         self.__pysat_sovlver.add_clause([item])
             self.__pysat_sovlver.add_clause(positive_list)
             self.compute_model_count += 1
         return (model is not None ,model)
