@@ -17,8 +17,8 @@ There are two algorithms can be used to compute minimal model
 ## Usage
 ### library
 ```python
->>> import minimal_model.solvers
->>> solver = minimal_model.solvers.Solver()
+>>> from minimal_model.solvers import Solver
+>>> solver = Solver(name="MM",pysat_name="m22")
 >>> solver.add_clause([1, 2])
 >>> solver.add_clause([-2, 3])
 >>> (sat,model) = solver.compute_minimal_model()

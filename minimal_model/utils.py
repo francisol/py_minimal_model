@@ -23,4 +23,16 @@ def get_used_memory():
     ll =sour.memory_info()
     return ll.rss/ 1024. / 1024.
 
-    
+def mr(clauses, model):
+    # positive_model = set([x for x in model if x > 0])
+    negativ_model = set([x for x in model if x < 0])
+    result = []
+    for clause in clauses:
+        # header = [x for x in clause if x > 0]
+        body = [x for x in clause if x < 0]
+        if set(body).intersection(negativ_model):
+            continue
+        c = [x for x in clause if - x not in negativ_model]
+        if c:
+            result.append(c)
+    return result
